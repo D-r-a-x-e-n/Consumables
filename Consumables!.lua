@@ -1140,6 +1140,32 @@ local function RefreshGroupList(catContent, buffContent, catNameBox)
             end
         end)
         
+        local btnCopy = CreateFrame("Button", nil, btn)
+        btnCopy:SetWidth(16); btnCopy:SetHeight(16)
+        btnCopy:SetPoint("RIGHT", btn, "RIGHT", -20, 0) -- Positioned to the left of Delete
+        btnCopy:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-NextPage-Up")
+        btnCopy:SetScript("OnClick", function()
+            local idx = this:GetParent().index
+            local original = ConsumablesDB.categories[idx]
+            
+            local newCat = { name = original.name .. " (Copy)", buffs = {} }
+            
+            for _, buffData in ipairs(original.buffs) do
+                table.insert(newCat.buffs, { name = buffData.name })
+            end
+            
+            table.insert(ConsumablesDB.categories, idx + 1, newCat)
+            RefreshGroupList(catContent, buffContent, catNameBox)
+            UPDATE_QUEUED = true
+        end)
+
+        btnCopy:SetScript("OnEnter", function()
+            GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+            GameTooltip:SetText("Copy Group", 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        btnCopy:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
         local btnDel = CreateFrame("Button", nil, btn);
         btnDel:SetWidth(16); btnDel:SetHeight(16); btnDel:SetPoint("RIGHT", btn, "RIGHT", -2, 0);
         btnDel:SetNormalTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up");
