@@ -1143,7 +1143,7 @@ local function RefreshGroupList(catContent, buffContent, catNameBox)
         local btnCopy = CreateFrame("Button", nil, btn)
         btnCopy:SetWidth(16); btnCopy:SetHeight(16)
         btnCopy:SetPoint("RIGHT", btn, "RIGHT", -20, 0) -- Positioned to the left of Delete
-        btnCopy:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-NextPage-Up")
+        btnCopy:SetNormalTexture("Interface\\Buttons\\UI-GuildButton-PublicNote-Up")
         btnCopy:SetScript("OnClick", function()
             local idx = this:GetParent().index
             local original = ConsumablesDB.categories[idx]
