@@ -5,3 +5,4 @@
 ## SavedVariables: ConsumablesDB
 
 Consumables!.lua
+Bindings.xml

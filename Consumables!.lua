@@ -2,6 +2,10 @@
 -- CONSUMABLES
 -- =============================================================
 
+-- KEYBINDINGS
+BINDING_HEADER_CONSUMABLES = "Consumables Addon"
+BINDING_NAME_CONTOGGLE = "Toggle Show/Hide"
+
 -- 1. MASTER DATABASE
 -- -------------------------------------------------------------
 -- INSTRUCTIONS FOR ADDING BUFFS:
@@ -31,6 +35,7 @@ local MASTER_DB = {
     { id=0,     name="Sayge's Dark Fortune of Agility", icon="inv_misc_orb_02" },
     { id=23381, name="Traces of Silithyst", icon="spell_nature_timestop" },
     { id=20079, name="Spirit of Zanza", icon="inv_potion_30" },
+    { id=20081, name="Swiftness of Zanza", icon="inv_potion_31" },
 
     -- === FLASKS ===
     { id=13510, name="Flask of the Titans", icon="inv_potion_62" },
@@ -161,8 +166,8 @@ local MASTER_DB = {
     { id=20749, name="Brilliant Wizard Oil (OH)", icon="inv_potion_105" },
     { id=20748, name="Brilliant Mana Oil (MH)", icon="inv_potion_100" },
     { id=20748, name="Brilliant Mana Oil (OH)", icon="inv_potion_100" },
-    { id=23123, name="Blessed Weapon Coating (MH)", icon="inv_potion_138" },
-    { id=23123, name="Blessed Weapon Coating (OH)", icon="inv_potion_138" },
+    { id=23123, name="Blessed Wizard Oil (MH)", icon="inv_potion_138" },
+    { id=23123, name="Blessed Wizard Oil (OH)", icon="inv_potion_138" },
     { id=3829,  name="Frost Oil (MH)", icon="inv_potion_130" },
     { id=3829,  name="Frost Oil (OH)", icon="inv_potion_130" },
     { id=3824,  name="Shadowoil (MH)", icon="inv_potion_106" },
@@ -628,6 +633,7 @@ function RenderBuffIcons(frame, buffList, settings, isRightAligned)
     local cols = settings.columns
     local hideActive = settings.hideActive
     local alignRight = isRightAligned 
+    local independent = settings.independent
 
     -- Hide unused icons from previous renders
     local j = 1
@@ -646,7 +652,6 @@ function RenderBuffIcons(frame, buffList, settings, isRightAligned)
 
     for _, buffRef in ipairs(buffList) do
         local buff = nil
-        -- Find the DB entry based on the name in the category list
         if buffRef.name then
             local refLower = string.lower(buffRef.name)
             for _, dbRow in ipairs(MASTER_DB) do
@@ -655,11 +660,9 @@ function RenderBuffIcons(frame, buffList, settings, isRightAligned)
         end
 
         if buff then
-            -- Check Status
             local isActive, buffIdx, _ = GetBuffStatus(buff)
             local wbActive, wbTime, wbLoc = GetWeaponBuffStatus(buff)
             
-            -- Visibility Check
             local shouldShow = true
             if hideActive and (isActive or wbActive) then shouldShow = false end
 
@@ -671,7 +674,6 @@ function RenderBuffIcons(frame, buffList, settings, isRightAligned)
                 iconF:SetFrameLevel(frame:GetFrameLevel() + 5)
                 iconF:EnableMouse(true)
                 
-                -- Positioning Logic
                 iconF:ClearAllPoints()
                 if colCount >= cols then 
                     colCount = 0
@@ -685,7 +687,6 @@ function RenderBuffIcons(frame, buffList, settings, isRightAligned)
                     iconF:SetPoint("TOPLEFT", frame, "TOPLEFT", xOffset, yOffset) 
                 end
 
-                -- Icon Texture
                 local t = getglobal(iconF:GetName().."_Tex")
                 if not t then 
                     t = iconF:CreateTexture(iconF:GetName().."_Tex", "BACKGROUND")
@@ -693,7 +694,6 @@ function RenderBuffIcons(frame, buffList, settings, isRightAligned)
                 end
                 t:SetTexture("Interface\\Icons\\" .. buff.icon)
 
-                -- Count Text (Bag Count) - Friz Quadrata Size 11
                 local countText = getglobal(iconF:GetName().."_Count")
                 if not countText then 
                     countText = iconF:CreateFontString(iconF:GetName().."_Count", "OVERLAY")
@@ -703,52 +703,79 @@ function RenderBuffIcons(frame, buffList, settings, isRightAligned)
                 local bagCount = GetItemCountByID(buff.id)
                 if bagCount > 0 then countText:SetText(bagCount) else countText:SetText("") end
 
-                -- Timer Text - Friz Quadrata Size 11, Positioned TOP
                 local timerText = getglobal(iconF:GetName().."_Timer")
                 if not timerText then
                     timerText = iconF:CreateFontString(iconF:GetName().."_Timer", "OVERLAY")
                     timerText:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-                    timerText:SetPoint("TOP", 0, -2) -- Locked to TOP
+                    timerText:SetPoint("TOP", 0, -2)
                     timerText:SetTextColor(1, 1, 0)
                 end
                 timerText:SetText("") 
 
-                -- Status Logic (Coloring & Timer Update)
                 if isActive or wbActive then
-                    t:SetVertexColor(1, 1, 1); t:SetAlpha(1.0)
-                    
+                    t:SetVertexColor(1, 1, 1)
                     local timeLeft = 0
                     if wbActive then
                         timeLeft = wbTime
                     elseif isActive and buffIdx then
                         timeLeft = GetPlayerBuffTimeLeft(buffIdx)
                     end
-                    
                     if timeLeft > 0 then
                         timerText:SetText(FormatTime(timeLeft))
                     end
                 else
-                    t:SetVertexColor(1, 0.2, 0.2); t:SetAlpha(0.6) 
+                    t:SetVertexColor(0.5, 0.1, 0.1) 
                 end
 
-                -- Scripts
+                -- SCRIPTS
                 iconF.buffData = buff
                 iconF:SetScript("OnEnter", function() 
-                    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-                    GameTooltip:SetText(this.buffData.name, 1, 1, 1)
-                    if isActive then GameTooltip:AddLine("Active", 0, 1, 0)
-                    elseif wbActive then GameTooltip:AddLine("Active ("..(wbLoc or "?")..")", 0, 1, 0)
-                    else GameTooltip:AddLine("Inactive", 1, 0.2, 0.2) end
-                    GameTooltip:Show()
+                    if frame:GetAlpha() > 0.1 then
+                        GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+                        GameTooltip:SetText(this.buffData.name, 1, 1, 1)
+                        if isActive then GameTooltip:AddLine("Active", 0, 1, 0)
+                        elseif wbActive then GameTooltip:AddLine("Active ("..(wbLoc or "?")..")", 0, 1, 0)
+                        else GameTooltip:AddLine("Inactive", 1, 0.2, 0.2) end
+                        GameTooltip:Show()
+                    end
                 end)
                 iconF:SetScript("OnLeave", function() GameTooltip:Hide() end)
                 
-                iconF:SetScript("OnClick", function() if not IsAltKeyDown() then UseItemOrSpell(this.buffData) end end)
+                iconF:SetScript("OnClick", function() 
+                    if arg1 == "RightButton" and IsAltKeyDown() then
+                        if independent then
+                            frame.catData.alignRight = not frame.catData.alignRight
+                        else
+                            ConsumablesDB.settings.alignRight = not ConsumablesDB.settings.alignRight
+                        end
+                        UPDATE_QUEUED = true
+                    elseif not IsAltKeyDown() then 
+                        UseItemOrSpell(this.buffData) 
+                    end 
+                end)
                 
                 iconF:RegisterForDrag("LeftButton")
-                iconF:SetScript("OnDragStart", function() if IsAltKeyDown() then frame:GetScript("OnDragStart")() end end)
-                iconF:SetScript("OnDragStop", function() frame:GetScript("OnDragStop")() end)
-                iconF:SetScript("OnMouseUp", function() if frame:GetScript("OnMouseUp") then frame:GetScript("OnMouseUp")() end end)
+                iconF:SetScript("OnDragStart", function() 
+                    if IsAltKeyDown() then 
+                        local dragTarget = independent and frame or MAIN_CONTAINER
+                        if dragTarget then
+                            dragTarget:StartMoving()
+                            dragTarget.isMoving = true
+                        end
+                    end 
+                end)
+                iconF:SetScript("OnDragStop", function() 
+                    local dragTarget = independent and frame or MAIN_CONTAINER
+                    if dragTarget and dragTarget.isMoving then
+                        dragTarget:StopMovingOrSizing()
+                        dragTarget.isMoving = false
+                        if independent then
+                            SaveCategoryPosition(frame, frame.catIndex)
+                        else
+                            SavePosition()
+                        end
+                    end
+                end)
 
                 iconF:Show()
                 
@@ -766,23 +793,43 @@ function UpdateTrackers()
     if not ConsumablesDB then return end
     CreateMainContainer()
 
-    if ConsumablesDB.settings.hidden 
-       or (ConsumablesDB.settings.hideCombat and UnitAffectingCombat("player")) 
-       or (ConsumablesDB.settings.onlyRaid and GetNumRaidMembers() == 0) then
+    local settings = ConsumablesDB.settings
+    local independent = settings.independent
+    local catSpacing = settings.catSpacing or 20
+
+    -- 1. GLOBAL HIDE CONDITIONS
+    if settings.hidden 
+       or (settings.hideCombat and UnitAffectingCombat("player")) 
+       or (settings.onlyRaid and GetNumRaidMembers() == 0) then
         MAIN_CONTAINER:Hide()
         local i = 1
         while getglobal("Consumables_CatFrame_" .. i) do getglobal("Consumables_CatFrame_" .. i):Hide(); i = i + 1 end
         return
     end
 
-    local settings = ConsumablesDB.settings
-    local independent = settings.independent
-    local catSpacing = settings.catSpacing or 20
-
+    -- 2. MAIN CONTAINER SETUP
     if independent then 
-        MAIN_CONTAINER:Hide() 
+        MAIN_CONTAINER:Hide()
+        MAIN_CONTAINER:SetScript("OnUpdate", nil)
     else 
         MAIN_CONTAINER:Show()
+        
+        -- Master Visibility Control
+        if settings.mouseover then
+            -- FIX: Set initial alpha immediately based on current mouse position
+            local startAlpha = MouseIsOver(MAIN_CONTAINER) and 1 or 0
+            MAIN_CONTAINER:SetAlpha(startAlpha)
+
+            MAIN_CONTAINER:SetScript("OnUpdate", function()
+                local over = MouseIsOver(this)
+                if over and this:GetAlpha() < 1 then this:SetAlpha(1)
+                elseif not over and this:GetAlpha() > 0 then this:SetAlpha(0) end
+            end)
+        else
+            MAIN_CONTAINER:SetAlpha(1)
+            MAIN_CONTAINER:SetScript("OnUpdate", nil)
+        end
+
         if settings.showBackground then
             MAIN_CONTAINER:SetBackdrop(FRAME_BACKDROP)
             MAIN_CONTAINER:SetBackdropColor(0, 0, 0, 0.5)
@@ -792,6 +839,22 @@ function UpdateTrackers()
         end
     end
 
+    -- 3. POSITION MAIN CONTAINER
+    if not independent and MAIN_CONTAINER:GetRight() then
+        local scale = MAIN_CONTAINER:GetEffectiveScale() / UIParent:GetEffectiveScale()
+        MAIN_CONTAINER:ClearAllPoints()
+        if settings.alignRight then
+            local x = (MAIN_CONTAINER:GetRight() * scale) - UIParent:GetRight()
+            local y = (MAIN_CONTAINER:GetTop() * scale) - UIParent:GetTop()
+            MAIN_CONTAINER:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", x/scale, y/scale)
+        else
+            local x = MAIN_CONTAINER:GetLeft() * scale
+            local y = (MAIN_CONTAINER:GetTop() * scale) - UIParent:GetTop()
+            MAIN_CONTAINER:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x/scale, y/scale)
+        end
+    end
+
+    -- 4. CATEGORY FRAMES LOOP
     local currentY = 0
     local maxContainerWidth = 0
 
@@ -802,42 +865,43 @@ function UpdateTrackers()
         if catData.enabled ~= false then 
             frame.catIndex = catIndex 
             frame.catData = catData 
-
             local isRightAligned = (independent and catData.alignRight) or settings.alignRight
 
             frame:EnableMouse(true)
             frame:RegisterForDrag("LeftButton")
 
-            -- === MOUSEOVER LOGIC FIX ===
-            if settings.mouseover then
-                -- Set initial alpha based on current mouse position
-                if MouseIsOver(frame) then frame:SetAlpha(1) else frame:SetAlpha(0) end
-                
-                frame:SetScript("OnUpdate", function()
-                    if MouseIsOver(this) then
-                        if this:GetAlpha() < 1 then this:SetAlpha(1) end
-                    else
-                        if this:GetAlpha() > 0 then this:SetAlpha(0) end
-                    end
-                end)
-            else
-                frame:SetAlpha(1)
-                frame:SetScript("OnUpdate", nil)
-            end
-
-            -- Layout and background logic
+            -- Independent Frame Mouseover
             if independent then
+                if settings.mouseover then
+                    -- FIX: Set initial alpha for independent frames
+                    local startAlpha = MouseIsOver(frame) and 1 or 0
+                    frame:SetAlpha(startAlpha)
+
+                    frame:SetScript("OnUpdate", function()
+                        local over = MouseIsOver(this)
+                        if over and this:GetAlpha() < 1 then this:SetAlpha(1)
+                        elseif not over and this:GetAlpha() > 0 then this:SetAlpha(0) end
+                    end)
+                else
+                    frame:SetAlpha(1)
+                    frame:SetScript("OnUpdate", nil)
+                end
+                
                 if settings.showBackground then
                     frame:SetBackdrop(FRAME_BACKDROP)
                     frame:SetBackdropColor(0, 0, 0, 0.5)
+                    frame:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
                 else
                     frame:SetBackdrop(nil)
                 end
             else
+                -- Grouped Mode: Must inherit Alpha from Main Container
+                -- FIX: We no longer force Alpha 1 here so it obeys MAIN_CONTAINER alpha
+                frame:SetScript("OnUpdate", nil)
                 frame:SetBackdrop(nil)
             end
             
-            -- Set frame hierarchy
+            -- Parenting/Positioning
             if not frame.isDragging then
                 frame:ClearAllPoints()
                 if independent then
@@ -850,14 +914,20 @@ function UpdateTrackers()
                     end
                 else
                     frame:SetParent(MAIN_CONTAINER)
-                    if isRightAligned then 
-                        frame:SetPoint("TOPRIGHT", MAIN_CONTAINER, "TOPRIGHT", 0, currentY)
-                    else 
-                        frame:SetPoint("TOPLEFT", MAIN_CONTAINER, "TOPLEFT", 0, currentY) 
-                    end
+                    local point = isRightAligned and "TOPRIGHT" or "TOPLEFT"
+                    frame:SetPoint(point, MAIN_CONTAINER, point, 0, currentY)
                 end
             end
 
+            -- Title rendering
+            local txt = getglobal(frameName.."_Title")
+            if not txt then txt = frame:CreateFontString(frameName.."_Title", "OVERLAY", "GameFontNormalSmall") end
+            txt:SetText(catData.name)
+            txt:ClearAllPoints()
+            local tPoint = isRightAligned and "TOPRIGHT" or "TOPLEFT"
+            txt:SetPoint(tPoint, frame, tPoint, isRightAligned and -PADDING_SIDE or PADDING_SIDE, -PADDING_TOP)
+
+            -- Icon rendering
             local hasVisible, width, height = RenderBuffIcons(frame, catData.buffs, settings, isRightAligned)
 
             if hasVisible then
@@ -870,6 +940,13 @@ function UpdateTrackers()
         else
             frame:Hide()
         end
+    end
+
+    -- 5. CLEANUP
+    local cleanupIndex = table.getn(ConsumablesDB.categories) + 1
+    while getglobal("Consumables_CatFrame_" .. cleanupIndex) do
+        getglobal("Consumables_CatFrame_" .. cleanupIndex):Hide()
+        cleanupIndex = cleanupIndex + 1
     end
 
     if not independent then
@@ -1395,6 +1472,35 @@ local function CreateConfigWindow()
     CONFIG_FRAME = f; RefreshGroupList(catContent, buffContent, catNameBox); RefreshBuffList(buffContent); return f
 end
 
+
+function Consumables_ToggleEnable()
+    if not ConsumablesDB then return end
+    
+    -- Toggle the variable
+    ConsumablesDB.settings.hidden = not ConsumablesDB.settings.hidden
+    
+    -- Sync the checkbox in the config menu if it's currently open
+    if ConsumablesShowCheck then
+        ConsumablesShowCheck:SetChecked(not ConsumablesDB.settings.hidden)
+    end
+    
+    -- Output status to chat
+    local status = ConsumablesDB.settings.hidden and "|cffff0000Disabled|r" or "|cff00ff00Enabled|r"
+    DEFAULT_CHAT_FRAME:AddMessage("Consumables: " .. status)
+    
+    -- Trigger the frame refresh
+    UPDATE_QUEUED = true
+end
+
+ToggleConfig = function() 
+    if not CONFIG_FRAME then CreateConfigWindow() end
+    if CONFIG_FRAME:IsVisible() then 
+        CONFIG_FRAME:Hide() 
+    else 
+        CONFIG_FRAME:Show() 
+    end 
+end
+
 ToggleConfig = function() 
     if not CONFIG_FRAME then CreateConfigWindow() end
     if CONFIG_FRAME:IsVisible() then 
@@ -1514,10 +1620,7 @@ eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED");
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED");
 
 eventFrame:SetScript("OnEvent", function()
-    local ev = event or ""
-    local a1 = arg1 or ""
-
-    if ev == "VARIABLES_LOADED" then
+if event == "VARIABLES_LOADED" then
         if not ConsumablesDB then
             ConsumablesDB = {
                 settings = {
@@ -1535,11 +1638,8 @@ eventFrame:SetScript("OnEvent", function()
         
         CreateMinimapButton()
         UPDATE_QUEUED = true
-    elseif ev == "PLAYER_REGEN_DISABLED" or ev == "PLAYER_REGEN_ENABLED" or ev == "RAID_ROSTER_UPDATE" or ev == "PLAYER_ENTERING_WORLD" or ev == "BAG_UPDATE" then
-        if ev == "BAG_UPDATE" or ev == "PLAYER_ENTERING_WORLD" then lastBagScan = 0 end
-        UPDATE_QUEUED = true
-    elseif ev == "UNIT_AURA" then
-        if a1 == "player" then UPDATE_QUEUED = true end
+    elseif event == "UNIT_AURA" then
+        if arg1 == "player" then UPDATE_QUEUED = true end
     end
 end)
 
