@@ -1,7 +1,0 @@
-## Interface: 11200
-## Title: Consumables!
-## Notes: Track and manage your consumables!
-## Author: DRAXEN
-## SavedVariables: ConsumablesDB
-
-Consumables!.lua
