@@ -792,23 +792,8 @@ function UpdateTrackers()
         end
     end
 
-    -- Positioning logic for Main Container
-    if not independent and MAIN_CONTAINER:GetRight() and MAIN_CONTAINER:GetLeft() then
-        local right = MAIN_CONTAINER:GetRight()
-        local top = MAIN_CONTAINER:GetTop()
-        local left = MAIN_CONTAINER:GetLeft()
-        local scale = MAIN_CONTAINER:GetEffectiveScale() / UIParent:GetEffectiveScale()
-        MAIN_CONTAINER:ClearAllPoints()
-        if settings.alignRight then
-            local x = (right * scale) - UIParent:GetRight()
-            local y = (top * scale) - UIParent:GetTop()
-            MAIN_CONTAINER:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", x/scale, y/scale)
-        else
-            local x = left * scale
-            local y = (top * scale) - UIParent:GetTop()
-            MAIN_CONTAINER:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x/scale, y/scale)
-        end
-    end
+    local currentY = 0
+    local maxContainerWidth = 0
 
     for catIndex, catData in ipairs(ConsumablesDB.categories) do
         local frame = GetCategoryFrame(catIndex)
@@ -823,27 +808,28 @@ function UpdateTrackers()
             frame:EnableMouse(true)
             frame:RegisterForDrag("LeftButton")
 
-            -- === MOUSEOVER LOGIC START ===
+            -- === MOUSEOVER LOGIC FIX ===
             if settings.mouseover then
-                frame:SetAlpha(0)
+                -- Set initial alpha based on current mouse position
+                if MouseIsOver(frame) then frame:SetAlpha(1) else frame:SetAlpha(0) end
+                
                 frame:SetScript("OnUpdate", function()
                     if MouseIsOver(this) then
-                        this:SetAlpha(1)
+                        if this:GetAlpha() < 1 then this:SetAlpha(1) end
                     else
-                        this:SetAlpha(0)
+                        if this:GetAlpha() > 0 then this:SetAlpha(0) end
                     end
                 end)
             else
                 frame:SetAlpha(1)
                 frame:SetScript("OnUpdate", nil)
             end
-            -- === MOUSEOVER LOGIC END ===
 
+            -- Layout and background logic
             if independent then
                 if settings.showBackground then
                     frame:SetBackdrop(FRAME_BACKDROP)
                     frame:SetBackdropColor(0, 0, 0, 0.5)
-                    frame:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
                 else
                     frame:SetBackdrop(nil)
                 end
@@ -851,39 +837,7 @@ function UpdateTrackers()
                 frame:SetBackdrop(nil)
             end
             
-            frame:SetScript("OnDragStart", function() 
-                if IsAltKeyDown() and arg1 == "LeftButton" then 
-                    if independent then this.isDragging = true; this:StartMoving() 
-                    else MAIN_CONTAINER:StartMoving() end 
-                end 
-            end)
-            
-            frame:SetScript("OnMouseUp", function()
-                if arg1 == "RightButton" and IsAltKeyDown() then
-                    if independent then
-                        local d = this.catData
-                        if d.alignRight == nil then d.alignRight = true else d.alignRight = not d.alignRight end
-                    else
-                        ConsumablesDB.settings.alignRight = not ConsumablesDB.settings.alignRight
-                    end
-                    UpdateTrackers()
-                    return
-                end
-                if independent then
-                    this.isDragging = false; this:StopMovingOrSizing(); SaveCategoryPosition(this, this.catIndex)
-                else
-                    MAIN_CONTAINER:StopMovingOrSizing(); SavePosition() 
-                end
-            end)
-            
-            frame:SetScript("OnDragStop", function() 
-                if independent then
-                    this.isDragging = false; this:StopMovingOrSizing(); SaveCategoryPosition(this, this.catIndex)
-                else
-                    MAIN_CONTAINER:StopMovingOrSizing(); SavePosition() 
-                end
-            end)
-
+            -- Set frame hierarchy
             if not frame.isDragging then
                 frame:ClearAllPoints()
                 if independent then
@@ -904,16 +858,6 @@ function UpdateTrackers()
                 end
             end
 
-            local txt = getglobal(frameName.."_Title")
-            if not txt then txt = frame:CreateFontString(frameName.."_Title", "OVERLAY", "GameFontNormalSmall") end
-            txt:SetText(catData.name)
-            txt:ClearAllPoints()
-            if isRightAligned then 
-                txt:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PADDING_SIDE, -PADDING_TOP)
-            else 
-                txt:SetPoint("TOPLEFT", frame, "TOPLEFT", PADDING_SIDE, -PADDING_TOP) 
-            end
-
             local hasVisible, width, height = RenderBuffIcons(frame, catData.buffs, settings, isRightAligned)
 
             if hasVisible then
@@ -926,12 +870,6 @@ function UpdateTrackers()
         else
             frame:Hide()
         end
-    end
-
-    local cleanupIndex = table.getn(ConsumablesDB.categories) + 1
-    while getglobal("Consumables_CatFrame_" .. cleanupIndex) do
-        getglobal("Consumables_CatFrame_" .. cleanupIndex):Hide()
-        cleanupIndex = cleanupIndex + 1
     end
 
     if not independent then
@@ -1576,7 +1514,10 @@ eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED");
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED");
 
 eventFrame:SetScript("OnEvent", function()
-if event == "VARIABLES_LOADED" then
+    local ev = event or ""
+    local a1 = arg1 or ""
+
+    if ev == "VARIABLES_LOADED" then
         if not ConsumablesDB then
             ConsumablesDB = {
                 settings = {
@@ -1594,8 +1535,11 @@ if event == "VARIABLES_LOADED" then
         
         CreateMinimapButton()
         UPDATE_QUEUED = true
-    elseif event == "UNIT_AURA" then
-        if arg1 == "player" then UPDATE_QUEUED = true end
+    elseif ev == "PLAYER_REGEN_DISABLED" or ev == "PLAYER_REGEN_ENABLED" or ev == "RAID_ROSTER_UPDATE" or ev == "PLAYER_ENTERING_WORLD" or ev == "BAG_UPDATE" then
+        if ev == "BAG_UPDATE" or ev == "PLAYER_ENTERING_WORLD" then lastBagScan = 0 end
+        UPDATE_QUEUED = true
+    elseif ev == "UNIT_AURA" then
+        if a1 == "player" then UPDATE_QUEUED = true end
     end
 end)
 
