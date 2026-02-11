@@ -2,7 +2,9 @@
 
 Hello Turtles! 🤗
 
-Have you ever thought to yourself what consumables do I need? What consumables do I have? What consumables have I currently got active? And how long do those consumables have before I need to reapply them? Introducing a comprehensive, dynamic solution to all of those questions |🫒 "Consumables." 🧪| The one-stop addon/shop for being strong - because if you want the raid to bloom, don't assume, consume! 🙇‍♂️ (100% CONSUME COMPLIANCE with ZERO EFFORT!)
+Have you ever thought to yourself what consumables do I need? What consumables do I have? What consumables have I currently got active? And how long do those consumables have before I need to reapply them? Introducing a comprehensive, dynamic solution to all of those questions...
+|🫒 "Consumables!" 🧪| 
+The one-stop addon/shop for being strong - because if you want the raid to bloom, don't assume, consume! 🙇‍♂️ (100% CONSUME COMPLIANCE with ZERO EFFORT!)
 
 💡Features: 💡
 
