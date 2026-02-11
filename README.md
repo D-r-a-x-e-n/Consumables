@@ -4,7 +4,7 @@ Hello Turtles! 🤗
 
 Have you ever thought to yourself what consumables do I need? What consumables do I have? What consumables have I currently got active, and how long do those consumables have before I need to reapply them? If so, this addon provides a comprehensive, dynamic answer to all of those questions. Introducing... 
 
-🫒 **"Consumables!"** 🧪
+🫒 **Consumables!** 🧪
 
 💡Features: 💡
 
