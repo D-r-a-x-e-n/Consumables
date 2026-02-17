@@ -77,7 +77,7 @@ local MASTER_DB = {
     { id=13443, name="Superior Mana Potion", icon="inv_potion_74" },   
     { id=3928, name="Superior Healing Potion", icon="inv_potion_53" },        
     { id=61675, name="Nordanaar Herbal Tea", icon="inv_drink_waterskin_03" },
-    { id=20007, name="Mageblood Potion", icon="inv_potion_45" },
+    { id=20007, name="Mageblood Potion", icon="inv_potion_45" }, bufficon="inv_potion_45", checkTooltip="Mana Regeneration"},
     { id=13442, name="Mighty Rage Potion", icon="inv_potion_125", bufficon="Ability_warrior_innerrage", checkTooltip="Mighty Rage"},
     { id=5634,  name="Free Action Potion", icon="inv_potion_04" },
     { id=20008, name="Living Action Potion", icon="inv_potion_07" },
@@ -87,7 +87,7 @@ local MASTER_DB = {
     { id=9172,  name="Invisibility Potion", icon="inv_potion_24" },
     { id=61423, name="Dreamtonic", icon="inv_potion_114" },
     { id=13455, name="Greater Stoneshield Potion", icon="inv_potion_69" },
-    { id=61181, name="Potion of Quickness", icon="inv_potion_08" },   
+    { id=61181, name="Potion of Quickness", icon="inv_potion_08" }, bufficon="spell_nature_invisibilty", checkTooltip="Potion of Quickness" },   
     { id=20004, name="Major Troll's Blood Potion", icon="inv_potion_80", bufficon="inv_potion_79", checkTooltip="Regeneration" },      
 
     -- === FOOD ===
