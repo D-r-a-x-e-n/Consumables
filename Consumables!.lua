@@ -87,7 +87,7 @@ local MASTER_DB = {
     { id=9172,  name="Invisibility Potion", icon="inv_potion_24" },
     { id=61423, name="Dreamtonic", icon="inv_potion_114" },
     { id=13455, name="Greater Stoneshield Potion", icon="inv_potion_69" },
-    { id=61181, name="Potion of Quickness", icon="inv_potion_08" }, bufficon="spell_nature_invisibilty", checkTooltip="Potion of Quickness" },   
+    { id=61181, name="Potion of Quickness", icon="inv_potion_08" , bufficon="spell_nature_invisibilty", checkTooltip="Potion of Quickness" },   
     { id=20004, name="Major Troll's Blood Potion", icon="inv_potion_80", bufficon="inv_potion_79", checkTooltip="Regeneration" },      
 
     -- === FOOD ===
