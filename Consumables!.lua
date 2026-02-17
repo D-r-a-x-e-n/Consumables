@@ -77,7 +77,7 @@ local MASTER_DB = {
     { id=13443, name="Superior Mana Potion", icon="inv_potion_74" },   
     { id=3928, name="Superior Healing Potion", icon="inv_potion_53" },        
     { id=61675, name="Nordanaar Herbal Tea", icon="inv_drink_waterskin_03" },
-    { id=20007, name="Mageblood Potion", icon="inv_potion_45" }, bufficon="inv_potion_45", checkTooltip="Mana Regeneration"},
+    { id=20007, name="Mageblood Potion", icon="inv_potion_45" , bufficon="inv_potion_45", checkTooltip="Mana Regeneration"},
     { id=13442, name="Mighty Rage Potion", icon="inv_potion_125", bufficon="Ability_warrior_innerrage", checkTooltip="Mighty Rage"},
     { id=5634,  name="Free Action Potion", icon="inv_potion_04" },
     { id=20008, name="Living Action Potion", icon="inv_potion_07" },
