@@ -106,8 +106,9 @@ local MASTER_DB = {
     { id=51717, name="Hardened Mushroom", icon="inv_mushroom_15", bufficon="spell_misc_food", bufficon="inv_boots_plate_03", checkTooltip="Increased Stamina" },
     { id=84040, name="Le Fishe Au Chocolat", icon="inv_misc_fishe_au_chocolate", bufficon="spell_misc_food" },
     { id=51714, name="Sour Mountain Berry", icon="inv_misc_food_40", bufficon="spell_misc_food" },
-    { id=83309, name="Empowering Herbal Salad", icon="inv_misc_food_salad", bufficon="spell_misc_food" },
-    { id=18045, name="Tender Wolf Steak", icon="inv_misc_food_47", bufficon="spell_misc_food" },    
+    { id=83309, name="Empowering Herbal Salad", icon="inv_misc_food_salad", bufficon="spell_nature_healingway", checkTooltip="Healing Bonus" },
+    { id=18045, name="Tender Wolf Steak", icon="inv_misc_food_47", bufficon="spell_misc_food" }, 
+    { id=53015, name="Gurubashi Gumbo", icon="inv_misc_food_64", bufficon="spell_misc_food" },         
 
     -- === ALCOHOL ===
     { id=61175, name="Medivh's Merlot Blue", icon="inv_drink_waterskin_01" },
