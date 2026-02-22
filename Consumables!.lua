@@ -182,11 +182,9 @@ local MASTER_DB = {
     { id=51933, name="Spellstone", icon="inv_misc_gem_sapphire_01" },
     { id=51936, name="Voidstone", icon="inv_enchant_voidsphere.png" },  
     { id=51935, name="Wrathstone", icon="inv_misc_gem_bloodstone_02.png" },     
-    { id=51934, name="Felstone", icon="inv_misc_gem_felstone.png" },      
-    { id=1254,  name="Lesser Firestone", icon="inv_misc_gem_bloodstone_02.png", bufficon="spell_fire_meteorstorm.png", checkTooltip="Firestone Passive"  },                  
-    { id=13699, name="Firestone", icon="inv_misc_gem_bloodstone_02.png", bufficon="spell_fire_meteorstorm.png", checkTooltip="Firestone Passive"  },   
-    { id=13700, name="Greater Firestone", icon="inv_misc_gem_bloodstone_02.png", bufficon="spell_fire_meteorstorm.png", checkTooltip="Firestone Passive"  },  
-    { id=13701, name="Major Firestone", icon="inv_misc_gem_bloodstone_02.png", bufficon="spell_fire_meteorstorm.png", checkTooltip="Firestone Passive"  },      
+    { id=51934, name="Felstone", icon="inv_misc_gem_felstone.png" },                       
+    { id=13699, name="Firestone", icon="inv_ammo_firetar", bufficon="inv_ammo_firetar", checkTooltip="Firestone"  },   
+  
 
     { id=0,     name="Windfury Weapon (MH)", icon="spell_nature_cyclone" },
     { id=0,     name="Windfury Weapon (OH)", icon="spell_nature_cyclone" },
