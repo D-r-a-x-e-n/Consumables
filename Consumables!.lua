@@ -68,7 +68,7 @@ local MASTER_DB = {
     { id=13445, name="Elixir of Superior Defense", icon="inv_potion_86" },
     { id=3389,  name="Elixir of Defense", icon="inv_potion_68" },
     { id=9088,  name="Gift of Arthas", icon="inv_potion_28", bufficon="spell_shadow_fingerofdeath", checkTooltip="Gift of Arthas" },
-    { id=61224,  name="Dreamshard Elixir", icon="inv_potion_113" },
+    { id=61224, name="Dreamshard Elixir", icon="inv_potion_113" },
     { id=9224,  name="Elixir of Demonslaying", icon="inv_potion_27", bufficon="spell_holy_retributionaura", checkTooltip="Increases attack power by 265 against demons. Lasts 300 sec." },
 
     -- === POTIONS ===
@@ -116,7 +116,7 @@ local MASTER_DB = {
     { id=53015, name="Gurubashi Gumbo", icon="inv_misc_food_64", bufficon="spell_misc_food" },         
 
     -- === ALCOHOL ===
-    { id=61175, name="Medivh's Merlot Blue", icon="inv_drink_waterskin_01" },
+    { id=61175, name="Medivh's Merlot Blue", icon="inv_drink_waterskin_01", bufficon="inv_drink_04", checkTooltip="Medivh's Merlot Blue Label" },
     { id=61174, name="Medivh's Merlot", icon="inv_drink_waterskin_05", bufficon="inv_drink_04", checkTooltip="Medivh's Merlot" },
     { id=21151, name="Rumsey Rum Black Label", icon="inv_drink_04" },
 
