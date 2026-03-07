@@ -316,6 +316,8 @@ local CONFIG_FRAME = nil
 local UPDATE_QUEUED = false
 local LAST_UPDATE_TIME = 0
 local ToggleConfig
+C_Profile = nil 
+local LAST_MH_STATE, LAST_OH_STATE 
 
 -- VISUAL CONSTANTS
 local PADDING_SIDE = 5
@@ -586,7 +588,7 @@ end
 
 function SavePosition()
     if MAIN_CONTAINER then
-        local settings = ConsumablesDB.settings
+        local settings = C_Profile.settings
         local point = settings.alignRight and "TOPRIGHT" or "TOPLEFT"
         local x, y
         if settings.alignRight then
@@ -596,17 +598,17 @@ function SavePosition()
             x = MAIN_CONTAINER:GetLeft()
             y = MAIN_CONTAINER:GetTop() - UIParent:GetTop()
         end
-        ConsumablesDB.settings.pos = { point = point, relativePoint = point, x = x, y = y }
+        C_Profile.settings.pos = { point = point, relativePoint = point, x = x, y = y }
     end
 end
 
 function SaveCategoryPosition(frame, index)
-    if frame and ConsumablesDB.categories[index] then
+    if frame and C_Profile.categories[index] then
         local alignRight = false
-        if ConsumablesDB.settings.independent then
-            if ConsumablesDB.categories[index].alignRight == true then alignRight = true end
+        if C_Profile.settings.independent then
+            if C_Profile.categories[index].alignRight == true then alignRight = true end
         else
-            alignRight = ConsumablesDB.settings.alignRight
+            alignRight = C_Profile.settings.alignRight
         end
         
         local point = alignRight and "TOPRIGHT" or "TOPLEFT"
@@ -618,7 +620,7 @@ function SaveCategoryPosition(frame, index)
             x = frame:GetLeft()
             y = frame:GetTop() - UIParent:GetTop()
         end
-        ConsumablesDB.categories[index].pos = { point = point, relativePoint = point, x = x, y = y }
+        C_Profile.categories[index].pos = { point = point, relativePoint = point, x = x, y = y }
     end
 end
 
@@ -629,8 +631,8 @@ function CreateMainContainer()
     MAIN_CONTAINER:SetClampedToScreen(true); MAIN_CONTAINER:SetMovable(true); MAIN_CONTAINER:EnableMouse(true)
     MAIN_CONTAINER:SetFrameStrata("MEDIUM")
     
-    if ConsumablesDB.settings.pos then
-        local p = ConsumablesDB.settings.pos
+    if C_Profile.settings.pos then
+        local p = C_Profile.settings.pos
         MAIN_CONTAINER:SetPoint(p.point, UIParent, p.relativePoint, p.x, p.y)
     else
         MAIN_CONTAINER:SetPoint("CENTER", UIParent, "CENTER", 0, -100)
@@ -816,7 +818,7 @@ function RenderBuffIcons(frame, buffList, settings, isRightAligned)
                         if independent then
                             frame.catData.alignRight = not frame.catData.alignRight
                         else
-                            ConsumablesDB.settings.alignRight = not ConsumablesDB.settings.alignRight
+                            C_Profile.settings.alignRight = not C_Profile.settings.alignRight
                         end
                         UPDATE_QUEUED = true
                     elseif not IsAltKeyDown() then 
@@ -860,10 +862,10 @@ function RenderBuffIcons(frame, buffList, settings, isRightAligned)
 end
 
 function UpdateTrackers()
-    if not ConsumablesDB then return end
+    if not C_Profile then return end
     CreateMainContainer()
 
-    local settings = ConsumablesDB.settings
+    local settings = C_Profile.settings
     local independent = settings.independent
     local catSpacing = settings.catSpacing or 20
 
@@ -923,7 +925,7 @@ function UpdateTrackers()
     local currentY = 0
     local maxContainerWidth = 0
 
-    for catIndex, catData in ipairs(ConsumablesDB.categories) do
+    for catIndex, catData in ipairs(C_Profile.categories) do
         local frame = GetCategoryFrame(catIndex)
         local frameName = frame:GetName()
 
@@ -955,7 +957,7 @@ function UpdateTrackers()
                     if independent then
                         catData.alignRight = not catData.alignRight
                     else
-                        ConsumablesDB.settings.alignRight = not ConsumablesDB.settings.alignRight
+                        C_Profile.settings.alignRight = not C_Profile.settings.alignRight
                     end
                     UPDATE_QUEUED = true
                 end
@@ -1033,7 +1035,7 @@ function UpdateTrackers()
         end
     end
 
-    local cleanupIndex = table.getn(ConsumablesDB.categories) + 1
+    local cleanupIndex = table.getn(C_Profile.categories) + 1
     while getglobal("Consumables_CatFrame_" .. cleanupIndex) do
         getglobal("Consumables_CatFrame_" .. cleanupIndex):Hide()
         cleanupIndex = cleanupIndex + 1
@@ -1094,7 +1096,7 @@ local function RefreshBuffList(scrollContent)
     local kids = {scrollContent:GetChildren()}; 
     for _, k in ipairs(kids) do k:Hide() end
     
-    local cat = ConsumablesDB.categories[CURRENT_CAT_INDEX]; 
+    local cat = C_Profile.categories[CURRENT_CAT_INDEX]; 
     if not cat then return end
     if not cat.buffs then cat.buffs = {} end
     
@@ -1130,7 +1132,7 @@ local function RefreshBuffList(scrollContent)
             if DRAG_INFO and DRAG_INFO.type == "BUFF" then
                 local sourceIdx = DRAG_INFO.index
                 local targetIdx = this.index
-                local list = ConsumablesDB.categories[CURRENT_CAT_INDEX].buffs
+                local list = C_Profile.categories[CURRENT_CAT_INDEX].buffs
                 if sourceIdx ~= targetIdx and list[sourceIdx] then
                     local item = table.remove(list, sourceIdx)
                     table.insert(list, targetIdx, item)
@@ -1150,7 +1152,7 @@ local function RefreshBuffList(scrollContent)
         del:SetNormalTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
         del.index = i; del.parentContent = scrollContent
         del:SetScript("OnClick", function()
-            table.remove(ConsumablesDB.categories[CURRENT_CAT_INDEX].buffs, this.index);
+            table.remove(C_Profile.categories[CURRENT_CAT_INDEX].buffs, this.index);
             RefreshBuffList(this.parentContent); UPDATE_QUEUED = true
         end)
 
@@ -1185,7 +1187,7 @@ end
 local function RefreshGroupList(catContent, buffContent, catNameBox)
     local kids = {catContent:GetChildren()}; for _, k in ipairs(kids) do k:Hide() end
     local y = 0
-    for i, cat in ipairs(ConsumablesDB.categories) do
+    for i, cat in ipairs(C_Profile.categories) do
         local btn = CreateFrame("Button", nil, catContent);
         btn:SetWidth(190); btn:SetHeight(20); btn:SetPoint("TOPLEFT", 0, y)
         btn:RegisterForDrag("LeftButton")
@@ -1206,7 +1208,7 @@ local function RefreshGroupList(catContent, buffContent, catNameBox)
         chk:SetChecked(cat.enabled ~= false)
         chk:SetScript("OnClick", function() 
             local p = this:GetParent()
-            local c = ConsumablesDB.categories[p.index]
+            local c = C_Profile.categories[p.index]
             if c.enabled == false then c.enabled = true else c.enabled = false end
             UPDATE_QUEUED = true 
         end)
@@ -1229,7 +1231,7 @@ local function RefreshGroupList(catContent, buffContent, catNameBox)
             if DRAG_INFO and DRAG_INFO.type == "GROUP" then
                 local sourceIdx = DRAG_INFO.index
                 local targetIdx = this.index
-                local list = ConsumablesDB.categories
+                local list = C_Profile.categories
                 
                 if sourceIdx ~= targetIdx and list[sourceIdx] then
                     local item = table.remove(list, sourceIdx)
@@ -1260,7 +1262,7 @@ local function RefreshGroupList(catContent, buffContent, catNameBox)
         btnCopy:SetNormalTexture("Interface\\Buttons\\UI-GuildButton-PublicNote-Up")
         btnCopy:SetScript("OnClick", function()
             local idx = this:GetParent().index
-            local original = ConsumablesDB.categories[idx]
+            local original = C_Profile.categories[idx]
             
             local newCat = { name = original.name .. " (Copy)", buffs = {} }
             
@@ -1268,7 +1270,7 @@ local function RefreshGroupList(catContent, buffContent, catNameBox)
                 table.insert(newCat.buffs, { name = buffData.name })
             end
             
-            table.insert(ConsumablesDB.categories, idx + 1, newCat)
+            table.insert(C_Profile.categories, idx + 1, newCat)
             RefreshGroupList(catContent, buffContent, catNameBox)
             UPDATE_QUEUED = true
         end)
@@ -1285,9 +1287,9 @@ local function RefreshGroupList(catContent, buffContent, catNameBox)
         btnDel:SetNormalTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up");
         btnDel:SetScript("OnClick", function()
             local idx = this:GetParent().index
-            table.remove(ConsumablesDB.categories, idx)
+            table.remove(C_Profile.categories, idx)
             if CURRENT_CAT_INDEX >= idx and CURRENT_CAT_INDEX > 1 then CURRENT_CAT_INDEX = CURRENT_CAT_INDEX - 1 end
-            if CURRENT_CAT_INDEX > table.getn(ConsumablesDB.categories) then CURRENT_CAT_INDEX = 1 end
+            if CURRENT_CAT_INDEX > table.getn(C_Profile.categories) then CURRENT_CAT_INDEX = 1 end
             RefreshGroupList(catContent, buffContent, catNameBox); UPDATE_QUEUED = true
         end)
         y = y - 20
@@ -1378,8 +1380,8 @@ local function CreateConfigWindow()
     buffScroll:SetPoint("TOPLEFT", 15, -65); buffScroll:SetPoint("BOTTOMRIGHT", -30, 15)
     local buffContent = CreateFrame("Frame", nil, buffScroll); buffContent:SetWidth(260); buffContent:SetHeight(300); buffScroll:SetScrollChild(buffContent)
 
-    renameBtn:SetScript("OnClick", function() if ConsumablesDB.categories[CURRENT_CAT_INDEX] then ConsumablesDB.categories[CURRENT_CAT_INDEX].name = catNameBox:GetText(); RefreshGroupList(catContent, buffContent, catNameBox); UPDATE_QUEUED = true end end)
-    newCatBtn:SetScript("OnClick", function() local name = newCatBox:GetText(); if name and name ~= "" then table.insert(ConsumablesDB.categories, { name = name, buffs = {} }); newCatBox:SetText(""); RefreshGroupList(catContent, buffContent, catNameBox) end end)
+    renameBtn:SetScript("OnClick", function() if C_Profile.categories[CURRENT_CAT_INDEX] then C_Profile.categories[CURRENT_CAT_INDEX].name = catNameBox:GetText(); RefreshGroupList(catContent, buffContent, catNameBox); UPDATE_QUEUED = true end end)
+    newCatBtn:SetScript("OnClick", function() local name = newCatBox:GetText(); if name and name ~= "" then table.insert(C_Profile.categories, { name = name, buffs = {} }); newCatBox:SetText(""); RefreshGroupList(catContent, buffContent, catNameBox) end end)
 
     f:SetScript("OnUpdate", function()
         if DRAG_INFO then
@@ -1428,7 +1430,7 @@ local function CreateConfigWindow()
         local bg = btn:CreateTexture(nil, "BACKGROUND"); bg:SetAllPoints(btn); bg:SetTexture(1, 1, 1, 0.3); bg:SetVertexColor(0,0,0,0); btn.bg = bg; btn.icon = icon; btn.text = text
         btn:SetScript("OnEnter", function() this.bg:SetVertexColor(1,1,1,0.3) end); btn:SetScript("OnLeave", function() this.bg:SetVertexColor(0,0,0,0) end)
         btn:SetScript("OnClick", function()
-            local cat = ConsumablesDB.categories[CURRENT_CAT_INDEX]
+            local cat = C_Profile.categories[CURRENT_CAT_INDEX]
             if cat then 
                 local found = false
                 for _, b in ipairs(cat.buffs) do
@@ -1461,17 +1463,17 @@ local function CreateConfigWindow()
     local showCheck = CreateFrame("CheckButton", "ConsumablesShowCheck", settingsTab, "OptionsCheckButtonTemplate");
     showCheck:SetPoint("TOPLEFT", 20, -60); getglobal("ConsumablesShowCheckText"):SetText("Enable")
     showCheck:SetFrameLevel(settingsTab:GetFrameLevel() + 5)
-    showCheck:SetChecked(not ConsumablesDB.settings.hidden)
-    showCheck:SetScript("OnClick", function() ConsumablesDB.settings.hidden = not this:GetChecked(); UPDATE_QUEUED = true end)
+    showCheck:SetChecked(not C_Profile.settings.hidden)
+    showCheck:SetScript("OnClick", function() C_Profile.settings.hidden = not this:GetChecked(); UPDATE_QUEUED = true end)
 
     local mmUnlockCheck = CreateFrame("CheckButton", "ConsumablesMMUnlockCheck", settingsTab, "OptionsCheckButtonTemplate");
     mmUnlockCheck:SetPoint("TOPLEFT", 220, -60); 
     mmUnlockCheck:SetFrameLevel(settingsTab:GetFrameLevel() + 5)
     getglobal("ConsumablesMMUnlockCheckText"):SetText("Detach Minimap Button")
-    mmUnlockCheck:SetChecked(ConsumablesDB.settings.minimap and ConsumablesDB.settings.minimap.unlocked)
+    mmUnlockCheck:SetChecked(C_Profile.settings.minimap and C_Profile.settings.minimap.unlocked)
     mmUnlockCheck:SetScript("OnClick", function() 
-        if not ConsumablesDB.settings.minimap then ConsumablesDB.settings.minimap = {} end
-        ConsumablesDB.settings.minimap.unlocked = (this:GetChecked() == 1)
+        if not C_Profile.settings.minimap then C_Profile.settings.minimap = {} end
+        C_Profile.settings.minimap.unlocked = (this:GetChecked() == 1)
         if Cons_MinimapButton and Cons_MinimapButton.UpdatePosition then
             Cons_MinimapButton.UpdatePosition()
         end
@@ -1481,9 +1483,9 @@ local function CreateConfigWindow()
     bgCheck:SetPoint("TOPLEFT", 20, -90); 
     bgCheck:SetFrameLevel(settingsTab:GetFrameLevel() + 5)
     getglobal("ConsumablesBgCheckText"):SetText("Show Background")
-    bgCheck:SetChecked(ConsumablesDB.settings.showBackground)
+    bgCheck:SetChecked(C_Profile.settings.showBackground)
     bgCheck:SetScript("OnClick", function() 
-        ConsumablesDB.settings.showBackground = (this:GetChecked() == 1)
+        C_Profile.settings.showBackground = (this:GetChecked() == 1)
         UPDATE_QUEUED = true 
     end)
 
@@ -1491,9 +1493,9 @@ local function CreateConfigWindow()
     titleCheck:SetPoint("TOPLEFT", 220, -90); 
     titleCheck:SetFrameLevel(settingsTab:GetFrameLevel() + 5)
     getglobal("ConsumablesTitleCheckText"):SetText("Show Group Titles")
-    titleCheck:SetChecked(ConsumablesDB.settings.showTitles)
+    titleCheck:SetChecked(C_Profile.settings.showTitles)
     titleCheck:SetScript("OnClick", function() 
-        ConsumablesDB.settings.showTitles = (this:GetChecked() == 1)
+        C_Profile.settings.showTitles = (this:GetChecked() == 1)
         UPDATE_QUEUED = true 
     end)
 
@@ -1501,31 +1503,31 @@ local function CreateConfigWindow()
     combatCheck:SetPoint("TOPLEFT", 20, -120); 
     combatCheck:SetFrameLevel(settingsTab:GetFrameLevel() + 5)
     getglobal("ConsumablesCombatCheckText"):SetText("Hide in Combat")
-    combatCheck:SetChecked(ConsumablesDB.settings.hideCombat)
-    combatCheck:SetScript("OnClick", function() ConsumablesDB.settings.hideCombat = this:GetChecked(); UPDATE_QUEUED = true end)
+    combatCheck:SetChecked(C_Profile.settings.hideCombat)
+    combatCheck:SetScript("OnClick", function() C_Profile.settings.hideCombat = this:GetChecked(); UPDATE_QUEUED = true end)
 
     local raidCheck = CreateFrame("CheckButton", "ConsumablesRaidCheck", settingsTab, "OptionsCheckButtonTemplate");
     raidCheck:SetPoint("TOPLEFT", 220, -120); 
     raidCheck:SetFrameLevel(settingsTab:GetFrameLevel() + 5)
     getglobal("ConsumablesRaidCheckText"):SetText("Only Show in Raid")
-    raidCheck:SetChecked(ConsumablesDB.settings.onlyRaid)
-    raidCheck:SetScript("OnClick", function() ConsumablesDB.settings.onlyRaid = this:GetChecked(); UPDATE_QUEUED = true end)
+    raidCheck:SetChecked(C_Profile.settings.onlyRaid)
+    raidCheck:SetScript("OnClick", function() C_Profile.settings.onlyRaid = this:GetChecked(); UPDATE_QUEUED = true end)
 
     local activeCheck = CreateFrame("CheckButton", "ConsumablesActiveCheck", settingsTab, "OptionsCheckButtonTemplate");
     activeCheck:SetPoint("TOPLEFT", 20, -150); 
     activeCheck:SetFrameLevel(settingsTab:GetFrameLevel() + 5)
     getglobal("ConsumablesActiveCheckText"):SetText("Hide Active Buffs")
-    activeCheck:SetChecked(ConsumablesDB.settings.hideActive)
-    activeCheck:SetScript("OnClick", function() ConsumablesDB.settings.hideActive = (this:GetChecked() == 1); UPDATE_QUEUED = true end)
+    activeCheck:SetChecked(C_Profile.settings.hideActive)
+    activeCheck:SetScript("OnClick", function() C_Profile.settings.hideActive = (this:GetChecked() == 1); UPDATE_QUEUED = true end)
     
     local independentCheck = CreateFrame("CheckButton", "ConsumablesIndependentCheck", settingsTab, "OptionsCheckButtonTemplate");
     independentCheck:SetPoint("TOPLEFT", 220, -150); 
     independentCheck:SetFrameLevel(settingsTab:GetFrameLevel() + 5)
     getglobal("ConsumablesIndependentCheckText"):SetText("Detach Groups")
-    independentCheck:SetChecked(ConsumablesDB.settings.independent)
+    independentCheck:SetChecked(C_Profile.settings.independent)
     independentCheck:SetScript("OnClick", function() 
         local isIndep = this:GetChecked()
-        ConsumablesDB.settings.independent = isIndep
+        C_Profile.settings.independent = isIndep
         UPDATE_QUEUED = true 
     end)
     
@@ -1533,10 +1535,10 @@ local function CreateConfigWindow()
     mmCheck:SetPoint("TOPLEFT", 20, -180); 
     mmCheck:SetFrameLevel(settingsTab:GetFrameLevel() + 5)
     getglobal("ConsumablesMMCheckText"):SetText("Show Minimap Button")
-    mmCheck:SetChecked(not (ConsumablesDB.settings.minimap and ConsumablesDB.settings.minimap.hide))
+    mmCheck:SetChecked(not (C_Profile.settings.minimap and C_Profile.settings.minimap.hide))
     mmCheck:SetScript("OnClick", function() 
-        if not ConsumablesDB.settings.minimap then ConsumablesDB.settings.minimap = {} end
-        ConsumablesDB.settings.minimap.hide = (this:GetChecked() ~= 1)
+        if not C_Profile.settings.minimap then C_Profile.settings.minimap = {} end
+        C_Profile.settings.minimap.hide = (this:GetChecked() ~= 1)
         UpdateMinimapButton()
     end)
 
@@ -1544,31 +1546,31 @@ local function CreateConfigWindow()
     mouseoverCheck:SetPoint("TOPLEFT", 220, -180); 
     mouseoverCheck:SetFrameLevel(settingsTab:GetFrameLevel() + 5)
     getglobal("ConsumablesMouseoverCheckText"):SetText("Show on Mouseover")
-    mouseoverCheck:SetChecked(ConsumablesDB.settings.mouseover)
+    mouseoverCheck:SetChecked(C_Profile.settings.mouseover)
     mouseoverCheck:SetScript("OnClick", function() 
-        ConsumablesDB.settings.mouseover = this:GetChecked()
+        C_Profile.settings.mouseover = this:GetChecked()
         UPDATE_QUEUED = true 
     end)
 
     local sizeSlider = CreateFrame("Slider", "ConsumablesSizeSlider", settingsTab, "OptionsSliderTemplate"); sizeSlider:SetWidth(180); sizeSlider:SetHeight(16);
-    sizeSlider:SetPoint("TOPLEFT", 20, -230); sizeSlider:SetMinMaxValues(16, 64); sizeSlider:SetValueStep(2); sizeSlider:SetValue(ConsumablesDB.settings.iconSize)
-    getglobal("ConsumablesSizeSliderText"):SetText("Icon Size: " .. ConsumablesDB.settings.iconSize); getglobal("ConsumablesSizeSliderLow"):SetText("16"); getglobal("ConsumablesSizeSliderHigh"):SetText("64")
-    sizeSlider:SetScript("OnValueChanged", function() ConsumablesDB.settings.iconSize = math.floor(this:GetValue()); getglobal("ConsumablesSizeSliderText"):SetText("Icon Size: " .. ConsumablesDB.settings.iconSize); UPDATE_QUEUED = true end)
+    sizeSlider:SetPoint("TOPLEFT", 20, -230); sizeSlider:SetMinMaxValues(16, 64); sizeSlider:SetValueStep(2); sizeSlider:SetValue(C_Profile.settings.iconSize)
+    getglobal("ConsumablesSizeSliderText"):SetText("Icon Size: " .. C_Profile.settings.iconSize); getglobal("ConsumablesSizeSliderLow"):SetText("16"); getglobal("ConsumablesSizeSliderHigh"):SetText("64")
+    sizeSlider:SetScript("OnValueChanged", function() C_Profile.settings.iconSize = math.floor(this:GetValue()); getglobal("ConsumablesSizeSliderText"):SetText("Icon Size: " .. C_Profile.settings.iconSize); UPDATE_QUEUED = true end)
 
     local spaceSlider = CreateFrame("Slider", "ConsumablesSpaceSlider", settingsTab, "OptionsSliderTemplate"); spaceSlider:SetWidth(180); spaceSlider:SetHeight(16);
-    spaceSlider:SetPoint("TOPLEFT", 20, -270); spaceSlider:SetMinMaxValues(0, 20); spaceSlider:SetValueStep(1); spaceSlider:SetValue(ConsumablesDB.settings.spacing)
-    getglobal("ConsumablesSpaceSliderText"):SetText("Spacing: " .. ConsumablesDB.settings.spacing); getglobal("ConsumablesSpaceSliderLow"):SetText("0"); getglobal("ConsumablesSpaceSliderHigh"):SetText("20")
-    spaceSlider:SetScript("OnValueChanged", function() ConsumablesDB.settings.spacing = math.floor(this:GetValue()); getglobal("ConsumablesSpaceSliderText"):SetText("Spacing: " .. ConsumablesDB.settings.spacing); UPDATE_QUEUED = true end)
+    spaceSlider:SetPoint("TOPLEFT", 20, -270); spaceSlider:SetMinMaxValues(0, 20); spaceSlider:SetValueStep(1); spaceSlider:SetValue(C_Profile.settings.spacing)
+    getglobal("ConsumablesSpaceSliderText"):SetText("Spacing: " .. C_Profile.settings.spacing); getglobal("ConsumablesSpaceSliderLow"):SetText("0"); getglobal("ConsumablesSpaceSliderHigh"):SetText("20")
+    spaceSlider:SetScript("OnValueChanged", function() C_Profile.settings.spacing = math.floor(this:GetValue()); getglobal("ConsumablesSpaceSliderText"):SetText("Spacing: " .. C_Profile.settings.spacing); UPDATE_QUEUED = true end)
 
     local catSpaceSlider = CreateFrame("Slider", "ConsumablesCatSpaceSlider", settingsTab, "OptionsSliderTemplate"); catSpaceSlider:SetWidth(180); catSpaceSlider:SetHeight(16);
-    catSpaceSlider:SetPoint("TOPLEFT", 20, -310); catSpaceSlider:SetMinMaxValues(0, 50); catSpaceSlider:SetValueStep(2); catSpaceSlider:SetValue(ConsumablesDB.settings.catSpacing or 20)
-    getglobal("ConsumablesCatSpaceSliderText"):SetText("Group Vertical Gap: " .. (ConsumablesDB.settings.catSpacing or 20)); getglobal("ConsumablesCatSpaceSliderLow"):SetText("0"); getglobal("ConsumablesCatSpaceSliderHigh"):SetText("50")
-    catSpaceSlider:SetScript("OnValueChanged", function() ConsumablesDB.settings.catSpacing = math.floor(this:GetValue()); getglobal("ConsumablesCatSpaceSliderText"):SetText("Group Vertical Gap: " .. ConsumablesDB.settings.catSpacing); UPDATE_QUEUED = true end)
+    catSpaceSlider:SetPoint("TOPLEFT", 20, -310); catSpaceSlider:SetMinMaxValues(0, 50); catSpaceSlider:SetValueStep(2); catSpaceSlider:SetValue(C_Profile.settings.catSpacing or 20)
+    getglobal("ConsumablesCatSpaceSliderText"):SetText("Group Vertical Gap: " .. (C_Profile.settings.catSpacing or 20)); getglobal("ConsumablesCatSpaceSliderLow"):SetText("0"); getglobal("ConsumablesCatSpaceSliderHigh"):SetText("50")
+    catSpaceSlider:SetScript("OnValueChanged", function() C_Profile.settings.catSpacing = math.floor(this:GetValue()); getglobal("ConsumablesCatSpaceSliderText"):SetText("Group Vertical Gap: " .. C_Profile.settings.catSpacing); UPDATE_QUEUED = true end)
 
     local colSlider = CreateFrame("Slider", "ConsumablesColSlider", settingsTab, "OptionsSliderTemplate"); colSlider:SetWidth(180); colSlider:SetHeight(16);
-    colSlider:SetPoint("TOPLEFT", 20, -350); colSlider:SetMinMaxValues(1, 20); colSlider:SetValueStep(1); colSlider:SetValue(ConsumablesDB.settings.columns or 10)
-    getglobal("ConsumablesColSliderText"):SetText("Max Columns: " .. (ConsumablesDB.settings.columns or 10)); getglobal("ConsumablesColSliderLow"):SetText("1"); getglobal("ConsumablesColSliderHigh"):SetText("20")
-    colSlider:SetScript("OnValueChanged", function() ConsumablesDB.settings.columns = math.floor(this:GetValue()); getglobal("ConsumablesColSliderText"):SetText("Max Columns: " .. ConsumablesDB.settings.columns); UPDATE_QUEUED = true end)
+    colSlider:SetPoint("TOPLEFT", 20, -350); colSlider:SetMinMaxValues(1, 20); colSlider:SetValueStep(1); colSlider:SetValue(C_Profile.settings.columns or 10)
+    getglobal("ConsumablesColSliderText"):SetText("Max Columns: " .. (C_Profile.settings.columns or 10)); getglobal("ConsumablesColSliderLow"):SetText("1"); getglobal("ConsumablesColSliderHigh"):SetText("20")
+    colSlider:SetScript("OnValueChanged", function() C_Profile.settings.columns = math.floor(this:GetValue()); getglobal("ConsumablesColSliderText"):SetText("Max Columns: " .. C_Profile.settings.columns); UPDATE_QUEUED = true end)
 
     local controlsFrame = CreateFrame("Frame", nil, settingsTab)
     controlsFrame:SetWidth(200); controlsFrame:SetHeight(300)
@@ -1596,18 +1598,18 @@ local function CreateConfigWindow()
 end
 
 function Consumables_ToggleEnable()
-    if not ConsumablesDB then return end
+    if not C_Profile then return end
     
     -- Toggle the variable
-    ConsumablesDB.settings.hidden = not ConsumablesDB.settings.hidden
+    C_Profile.settings.hidden = not C_Profile.settings.hidden
     
     -- Sync the checkbox in the config menu if it's currently open
     if ConsumablesShowCheck then
-        ConsumablesShowCheck:SetChecked(not ConsumablesDB.settings.hidden)
+        ConsumablesShowCheck:SetChecked(not C_Profile.settings.hidden)
     end
     
     -- Output status to chat
-    local status = ConsumablesDB.settings.hidden and "|cffff0000Disabled|r" or "|cff00ff00Enabled|r"
+    local status = C_Profile.settings.hidden and "|cffff0000Disabled|r" or "|cff00ff00Enabled|r"
     DEFAULT_CHAT_FRAME:AddMessage("Consumables: " .. status)
     
     -- Trigger the frame refresh
@@ -1637,8 +1639,8 @@ end
 -- =============================================================
 SLASH_CONSUMABLES1 = "/co"; SlashCmdList["CONSUMABLES"] = function(msg) 
     if msg == "reset" then
-        ConsumablesDB.settings.pos = nil
-        for _, cat in ipairs(ConsumablesDB.categories) do cat.pos = nil end
+        C_Profile.settings.pos = nil
+        for _, cat in ipairs(C_Profile.categories) do cat.pos = nil end
         if MAIN_CONTAINER then MAIN_CONTAINER:ClearAllPoints(); MAIN_CONTAINER:SetPoint("CENTER", 0, -100) end
         DEFAULT_CHAT_FRAME:AddMessage("Consumables: Positions reset.")
         UPDATE_QUEUED = true
@@ -1653,7 +1655,7 @@ end
 
 local function UpdateMinimapButton() 
     if Cons_MinimapButton then
-        if ConsumablesDB.settings.minimap and ConsumablesDB.settings.minimap.hide then
+        if C_Profile.settings.minimap and C_Profile.settings.minimap.hide then
             Cons_MinimapButton:Hide()
         else
             Cons_MinimapButton:Show()
@@ -1670,8 +1672,8 @@ local function CreateMinimapButton()
     miniMapBtn:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
     miniMapBtn:SetMovable(true)
 
-    if not ConsumablesDB.settings.minimap then ConsumablesDB.settings.minimap = {} end
-    if not ConsumablesDB.settings.minimap.angle then ConsumablesDB.settings.minimap.angle = 225 end
+    if not C_Profile.settings.minimap then C_Profile.settings.minimap = {} end
+    if not C_Profile.settings.minimap.angle then C_Profile.settings.minimap.angle = 225 end
 
     miniMapBtn.icon = miniMapBtn:CreateTexture(nil, "BACKGROUND")
     miniMapBtn.icon:SetPoint("CENTER", 0, 0)
@@ -1686,9 +1688,9 @@ local function CreateMinimapButton()
 
     local function UpdateMinimapButtonPosition()
         miniMapBtn:ClearAllPoints()
-        if ConsumablesDB.settings.minimap.unlocked then
+        if C_Profile.settings.minimap.unlocked then
             miniMapBtn:SetParent(UIParent)
-            local p = ConsumablesDB.settings.minimap.pos
+            local p = C_Profile.settings.minimap.pos
             if p then
                 miniMapBtn:SetPoint(p.point, UIParent, p.relativePoint, p.x, p.y)
             else
@@ -1696,7 +1698,7 @@ local function CreateMinimapButton()
             end
         else
             miniMapBtn:SetParent(Minimap)
-            local angle = ConsumablesDB.settings.minimap.angle
+            local angle = C_Profile.settings.minimap.angle
             local radius = 80
             local x = radius * math.cos(math.rad(angle))
             local y = radius * math.sin(math.rad(angle))
@@ -1708,7 +1710,7 @@ local function CreateMinimapButton()
     miniMapBtn:RegisterForClicks("LeftButtonUp")
 
     miniMapBtn:SetScript("OnDragStart", function()
-        if ConsumablesDB.settings.minimap.unlocked then
+        if C_Profile.settings.minimap.unlocked then
             this:StartMoving()
         else
             this:SetScript("OnUpdate", function()
@@ -1719,7 +1721,7 @@ local function CreateMinimapButton()
                 local dx, dy = mx - px, my - py
                 local angle = math.deg(math.atan2(dy, dx))
                 if angle < 0 then angle = angle + 360 end
-                ConsumablesDB.settings.minimap.angle = angle
+                C_Profile.settings.minimap.angle = angle
                 UpdateMinimapButtonPosition()
             end)
         end
@@ -1728,9 +1730,9 @@ local function CreateMinimapButton()
     miniMapBtn:SetScript("OnDragStop", function()
         this:StopMovingOrSizing()
         this:SetScript("OnUpdate", nil)
-        if ConsumablesDB.settings.minimap.unlocked then
+        if C_Profile.settings.minimap.unlocked then
             local point, _, relativePoint, x, y = this:GetPoint()
-            ConsumablesDB.settings.minimap.pos = { point = point, relativePoint = relativePoint, x = x, y = y }
+            C_Profile.settings.minimap.pos = { point = point, relativePoint = relativePoint, x = x, y = y }
         end
     end)
 
@@ -1763,8 +1765,8 @@ local function CreateMinimapButton()
     miniMapBtn:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
     miniMapBtn:SetMovable(true)
 
-    if not ConsumablesDB.settings.minimap then ConsumablesDB.settings.minimap = {} end
-    if not ConsumablesDB.settings.minimap.angle then ConsumablesDB.settings.minimap.angle = 225 end
+    if not C_Profile.settings.minimap then C_Profile.settings.minimap = {} end
+    if not C_Profile.settings.minimap.angle then C_Profile.settings.minimap.angle = 225 end
 
     miniMapBtn.icon = miniMapBtn:CreateTexture(nil, "BACKGROUND")
     miniMapBtn.icon:SetPoint("CENTER", 0, 0)
@@ -1779,9 +1781,9 @@ local function CreateMinimapButton()
 
     local function UpdateMinimapButtonPosition()
         miniMapBtn:ClearAllPoints()
-        if ConsumablesDB.settings.minimap.unlocked then
+        if C_Profile.settings.minimap.unlocked then
             miniMapBtn:SetParent(UIParent)
-            local p = ConsumablesDB.settings.minimap.pos
+            local p = C_Profile.settings.minimap.pos
             if p then
                 miniMapBtn:SetPoint(p.point, UIParent, p.relativePoint, p.x, p.y)
             else
@@ -1789,7 +1791,7 @@ local function CreateMinimapButton()
             end
         else
             miniMapBtn:SetParent(Minimap)
-            local angle = ConsumablesDB.settings.minimap.angle
+            local angle = C_Profile.settings.minimap.angle
             local radius = 80
             local x = radius * math.cos(math.rad(angle))
             local y = radius * math.sin(math.rad(angle))
@@ -1801,7 +1803,7 @@ local function CreateMinimapButton()
     miniMapBtn:RegisterForClicks("LeftButtonUp")
 
     miniMapBtn:SetScript("OnDragStart", function()
-        if ConsumablesDB.settings.minimap.unlocked then
+        if C_Profile.settings.minimap.unlocked then
             this:StartMoving()
         else
             this:SetScript("OnUpdate", function()
@@ -1812,7 +1814,7 @@ local function CreateMinimapButton()
                 local dx, dy = mx - px, my - py
                 local angle = math.deg(math.atan2(dy, dx))
                 if angle < 0 then angle = angle + 360 end
-                ConsumablesDB.settings.minimap.angle = angle
+                C_Profile.settings.minimap.angle = angle
                 UpdateMinimapButtonPosition()
             end)
         end
@@ -1821,9 +1823,9 @@ local function CreateMinimapButton()
     miniMapBtn:SetScript("OnDragStop", function()
         this:StopMovingOrSizing()
         this:SetScript("OnUpdate", nil)
-        if ConsumablesDB.settings.minimap.unlocked then
+        if C_Profile.settings.minimap.unlocked then
             local point, _, relativePoint, x, y = this:GetPoint()
-            ConsumablesDB.settings.minimap.pos = { point = point, relativePoint = relativePoint, x = x, y = y }
+            C_Profile.settings.minimap.pos = { point = point, relativePoint = relativePoint, x = x, y = y }
         end
     end)
 
@@ -1856,29 +1858,36 @@ eventFrame:RegisterEvent("RAID_ROSTER_UPDATE")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
+-- =============================================================
+-- PROFILE LOGIC
+-- =============================================================
+
 eventFrame:SetScript("OnEvent", function()
     if event == "VARIABLES_LOADED" then
-        if not ConsumablesDB then
-            ConsumablesDB = {
+        local charKey = UnitName("player") .. " of " .. GetRealmName()
+
+        if not ConsumablesDB then ConsumablesDB = {} end
+
+        if not ConsumablesDB[charKey] then
+            ConsumablesDB[charKey] = {
                 settings = {
-                    iconSize = 32, spacing = 4, catSpacing = 20, columns=10, alignRight=false,
-                    hideCombat=false, hidden=false, onlyRaid=false, hideActive=false, independent=false,
-                    showBackground=true, showTitles=true, mouseover=false, minimap={ hide=false, angle=45, unlocked=false }
+                    iconSize = 32, spacing = 4, catSpacing = 20, columns = 10, alignRight = false,
+                    hideCombat = false, hidden = false, onlyRaid = false, hideActive = false, independent = false,
+                    showBackground = true, showTitles = true, mouseover = false, 
+                    minimap = { hide = false, angle = 45, unlocked = false }
                 },
-                categories = { { name="Consumables", buffs={} } }
+                categories = { { name = "Consumables", buffs = {} } }
             }
         end
-        
-        if ConsumablesDB.settings.showBackground == nil then ConsumablesDB.settings.showBackground = true end
-        if ConsumablesDB.settings.showTitles == nil then ConsumablesDB.settings.showTitles = true end
-        if ConsumablesDB.settings.independent == nil then ConsumablesDB.settings.independent = false end
-        if ConsumablesDB.settings.mouseover == nil then ConsumablesDB.settings.mouseover = false end
-        if ConsumablesDB.settings.minimap == nil then ConsumablesDB.settings.minimap = { hide=false, angle=45, unlocked=false } end
-        if ConsumablesDB.settings.minimap.unlocked == nil then ConsumablesDB.settings.minimap.unlocked = false end
+
+        C_Profile = ConsumablesDB[charKey]
+
+        if not C_Profile.settings.minimap then C_Profile.settings.minimap = { hide=false, angle=45, unlocked=false } end
         
         CreateMinimapButton()
         UpdateMinimapButton()
         UPDATE_QUEUED = true
+
     elseif event == "UNIT_AURA" then
         if arg1 == "player" then UPDATE_QUEUED = true end
     elseif event == "BAG_UPDATE" or event == "RAID_ROSTER_UPDATE" or event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
@@ -1887,6 +1896,9 @@ eventFrame:SetScript("OnEvent", function()
 end)
 
 eventFrame:SetScript("OnUpdate", function()
+
+    if not C_Profile then return end
+
     local hasMain, _, _, hasOff, _, _ = GetWeaponEnchantInfo()
     if hasMain ~= LAST_MH_STATE or hasOff ~= LAST_OH_STATE then
         LAST_MH_STATE = hasMain
