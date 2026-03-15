@@ -110,7 +110,7 @@ local MASTER_DB = {
     { id=51720, name="Power Mushroom", icon="inv_mushroom_14", bufficon="spell_misc_food" },
     { id=51717, name="Hardened Mushroom", icon="inv_mushroom_15", bufficon="spell_misc_food", bufficon="inv_boots_plate_03", checkTooltip="Increased Stamina" },
     { id=84040, name="Le Fishe Au Chocolat", icon="inv_misc_fishe_au_chocolate", bufficon="spell_misc_food" },
-    { id=51714, name="Sour Mountain Berry", icon="inv_misc_food_40", bufficon="spell_misc_food" },
+    { id=51714, name="Sour Mountain Berry", icon="INV_Misc_Food_74", bufficon="INV_Gauntlets_19", checkTooltip="Increases Agility" },
     { id=83309, name="Empowering Herbal Salad", icon="inv_misc_food_salad", bufficon="spell_nature_healingway", checkTooltip="Healing Bonus" },
     { id=18045, name="Tender Wolf Steak", icon="inv_misc_food_47", bufficon="spell_misc_food" }, 
     { id=53015, name="Gurubashi Gumbo", icon="inv_misc_food_64", bufficon="spell_misc_food" },         
